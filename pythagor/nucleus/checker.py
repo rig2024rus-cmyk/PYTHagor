@@ -1,4 +1,4 @@
-"""Статическая проверка типов PYTHagor. Фаза 1.1.
+"""Статическая проверка типов PYTHagor. Фаза 1.3.
 
 Проверка идёт до вычисления: если типы не согласованы,
 рантайм не запускается. Сообщение объясняет причину
@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from pythagor.nucleus import environment
 from pythagor.nucleus.ast import (
     ARITHMETIC_OPS,
     COMPARISON_OPS,
@@ -15,6 +16,10 @@ from pythagor.nucleus.ast import (
     Cosmos,
     Expr,
     Harmonia,
+    Horos,
+    Onoma,
+    Statement,
+    Thesis,
     Tropos,
 )
 from pythagor.nucleus.types import Arithmos, Dilemma, Type
@@ -32,13 +37,15 @@ def _expect(actual: Type, expected: Type, where: str) -> None:
         )
 
 
-def infer(expr: Expr) -> Type:
-    """Выводит статический тип выражения или бросает TypeMismatch."""
+def infer(expr: Expr, nomos: environment.Nomos) -> Type:
+    """Выводит статический тип выражения в контексте nomos."""
     if isinstance(expr, Atomos):
         return expr.typ
+    if isinstance(expr, Onoma):
+        return nomos.lookup(expr.name)
     if isinstance(expr, Harmonia):
-        left = infer(expr.left)
-        right = infer(expr.right)
+        left = infer(expr.left, nomos)
+        right = infer(expr.right, nomos)
         if expr.op in ARITHMETIC_OPS:
             _expect(left, Arithmos(), f"левый операнд '{expr.op}'")
             _expect(right, Arithmos(), f"правый операнд '{expr.op}'")
@@ -54,15 +61,39 @@ def infer(expr: Expr) -> Type:
         raise TypeMismatch(f"неизвестный бинарный оператор '{expr.op}'")
     if isinstance(expr, Tropos):
         if expr.op == "-":
-            _expect(infer(expr.operand), Arithmos(), "операнд унарного '-'")
+            _expect(infer(expr.operand, nomos), Arithmos(), "операнд унарного '-'")
             return Arithmos()
         if expr.op == "не":
-            _expect(infer(expr.operand), Dilemma(), "операнд 'не'")
+            _expect(infer(expr.operand, nomos), Dilemma(), "операнд 'не'")
             return Dilemma()
         raise TypeMismatch(f"неизвестный унарный оператор '{expr.op}'")
     raise TypeMismatch(f"неизвестный узел выражения: {type(expr).__name__}")
 
 
+def check_statement(stmt: Statement, nomos: environment.Nomos) -> None:
+    """Проверяет оператор и обновляет nomos."""
+    if isinstance(stmt, Horos):
+        value_type = infer(stmt.value, nomos)
+        _expect(value_type, stmt.typ, f"значение переменной '{stmt.name}'")
+        nomos.declare(stmt.name, stmt.typ)
+    elif isinstance(stmt, Thesis):
+        value_type = infer(stmt.value, nomos)
+        var_type = nomos.lookup(stmt.name)
+        _expect(value_type, var_type, f"присваивание переменной '{stmt.name}'")
+    elif isinstance(stmt, Expr):
+        infer(stmt, nomos)
+    else:
+        raise TypeMismatch(f"неизвестный оператор: {type(stmt).__name__}")
+
+
 def check(cosmos: Cosmos) -> Type:
-    """Проверяет программу и возвращает тип её выражения."""
-    return infer(cosmos.expr)
+    """Проверяет программу и возвращает тип последнего оператора."""
+    nomos = environment.Nomos()
+    for stmt in cosmos.statements:
+        check_statement(stmt, nomos)
+    last = cosmos.last
+    if isinstance(last, Expr):
+        return infer(last, nomos)
+    if isinstance(last, (Horos, Thesis)):
+        return infer(last.value, nomos)
+    raise TypeMismatch(f"неизвестный оператор: {type(last).__name__}")

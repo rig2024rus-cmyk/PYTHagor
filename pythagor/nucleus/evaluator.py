@@ -1,13 +1,22 @@
-"""Вычислитель PYTHagor. Фаза 1.1.
+"""Вычислитель PYTHagor. Фаза 1.3.
 
 Вычисление начинается только после пройденной проверки типов.
-Значения рантайма: Monada и Dyada.
+Значения рантайма: Monada и Dyada. Значения переменных живут в Ousia.
 """
 
 from __future__ import annotations
 
-from pythagor.nucleus import checker
-from pythagor.nucleus.ast import Atomos, Cosmos, Expr, Harmonia, Tropos
+from pythagor.nucleus import checker, runtime
+from pythagor.nucleus.ast import (
+    Atomos,
+    Cosmos,
+    Expr,
+    Harmonia,
+    Horos,
+    Onoma,
+    Thesis,
+    Tropos,
+)
 from pythagor.nucleus.values import Value
 
 
@@ -26,16 +35,18 @@ BINARY_METHODS = {
 }
 
 
-def eval_expr(expr: Expr) -> Value:
-    """Вычисляет выражение, предполагая пройденную проверку типов."""
+def eval_expr(expr: Expr, ousia: runtime.Ousia) -> Value:
+    """Вычисляет выражение в контексте значений ousia."""
     if isinstance(expr, Atomos):
         return expr.value
+    if isinstance(expr, Onoma):
+        return ousia.lookup(expr.name)
     if isinstance(expr, Harmonia):
-        left = eval_expr(expr.left)
-        right = eval_expr(expr.right)
+        left = eval_expr(expr.left, ousia)
+        right = eval_expr(expr.right, ousia)
         return getattr(left, BINARY_METHODS[expr.op])(right)
     if isinstance(expr, Tropos):
-        operand = eval_expr(expr.operand)
+        operand = eval_expr(expr.operand, ousia)
         if expr.op == "-":
             return operand.neg()
         return operand.not_op()
@@ -43,6 +54,21 @@ def eval_expr(expr: Expr) -> Value:
 
 
 def run(cosmos: Cosmos) -> Value:
-    """Проверяет типы, затем вычисляет. При рассогласовании рантайм не стартует."""
+    """Проверяет типы, затем вычисляет операторы по порядку.
+
+    При рассогласовании типов рантайм не стартует.
+    Возвращает значение последнего оператора.
+    """
     checker.check(cosmos)
-    return eval_expr(cosmos.expr)
+    ousia = runtime.Ousia()
+    result: Value | None = None
+    for stmt in cosmos.statements:
+        if isinstance(stmt, (Horos, Thesis)):
+            result = eval_expr(stmt.value, ousia)
+            ousia.assign(stmt.name, result)
+        elif isinstance(stmt, Expr):
+            result = eval_expr(stmt, ousia)
+        else:
+            raise TypeError(f"неизвестный оператор: {type(stmt).__name__}")
+    assert result is not None, "программа без операторов"
+    return result

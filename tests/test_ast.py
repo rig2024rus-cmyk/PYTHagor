@@ -33,4 +33,4 @@ def test_cosmos_holds_expr() -> None:
     a = Atomos(Monada(1), Arithmos())
     b = Atomos(Monada(2), Arithmos())
     cosmos = Cosmos(Harmonia(a, "+", b))
-    assert isinstance(cosmos.expr, Harmonia)
+    assert isinstance(cosmos.statements[0], Harmonia)

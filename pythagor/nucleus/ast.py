@@ -1,9 +1,12 @@
-"""Абстрактное синтаксическое дерево PYTHagor. Фаза 1.1.
+"""Абстрактное синтаксическое дерево PYTHagor. Фаза 1.3.
 
 Atomos - неделимая частица выражения (литерал).
+Onoma - имя, ссылка на переменную.
 Harmonia - соединение left и right через бинарный оператор.
 Tropos - поворот: унарный минус или булево отрицание.
-Cosmos - корень программы, упорядоченное целое выражений.
+Horos - определение: объявление переменной с типом.
+Thesis - положение: присваивание значения переменной.
+Cosmos - корень программы, упорядоченное целое операторов.
 """
 
 from __future__ import annotations
@@ -27,6 +30,11 @@ class Expr:
 
 
 @dataclass(frozen=True)
+class Statement:
+    """Абстрактный оператор программы."""
+
+
+@dataclass(frozen=True)
 class Atomos(Expr):
     """Литерал. Хранит значение и его статический тип."""
 
@@ -38,6 +46,13 @@ class Atomos(Expr):
             raise TypeError("Atomos: Monada требует тип Arithmos")
         if isinstance(self.value, Dyada) and not isinstance(self.typ, Dilemma):
             raise TypeError("Atomos: Dyada требует тип Dilemma")
+
+
+@dataclass(frozen=True)
+class Onoma(Expr):
+    """Ссылка на переменную по имени."""
+
+    name: str
 
 
 @dataclass(frozen=True)
@@ -66,7 +81,39 @@ class Tropos(Expr):
 
 
 @dataclass(frozen=True)
-class Cosmos:
-    """Корень программы."""
+class Horos(Statement):
+    """Определение: имя : тип = значение."""
 
-    expr: Expr
+    name: str
+    typ: Type
+    value: Expr
+
+
+@dataclass(frozen=True)
+class Thesis(Statement):
+    """Положение: имя = значение."""
+
+    name: str
+    value: Expr
+
+
+@dataclass(frozen=True)
+class Cosmos:
+    """Корень программы: упорядоченное целое операторов.
+
+    Принимает кортеж операторов или одиночное выражение
+    для совместимости с программами фазы 1.1 и 1.2.
+    """
+
+    statements: object
+
+    def __post_init__(self) -> None:
+        if isinstance(self.statements, (Expr, Statement)):
+            object.__setattr__(self, "statements", (self.statements,))
+        else:
+            object.__setattr__(self, "statements", tuple(self.statements))
+
+    @property
+    def last(self) -> object:
+        """Последний оператор программы."""
+        return self.statements[-1]

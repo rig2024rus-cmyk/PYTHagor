@@ -31,8 +31,8 @@ def test_and_binds_tighter_than_or() -> None:
 
 def test_comparison_above_addition() -> None:
     cosmos = parse("1 + 2 < 4")
-    assert isinstance(cosmos.expr, Harmonia)
-    assert cosmos.expr.op == "<"
+    assert isinstance(cosmos.statements[0], Harmonia)
+    assert cosmos.statements[0].op == "<"
     assert run(cosmos) == Dyada(True)
 
 
