@@ -35,6 +35,13 @@ class Ousia:
         """
         self.scopes[-1][name] = value
 
+    def declare(self, name: str, value: Value) -> None:
+        """Объявляет переменную в текущей (верхней) области видимости. Затенение запрещено."""
+        for scope in self.scopes:
+            if name in scope:
+                raise UndefinedRuntimeVariable(f"переменная {name!r} уже объявлена")
+        self.scopes[-1][name] = value
+
     def assign(self, name: str, value: Value) -> None:
         """Обновляет существующую переменную. Ищет во всём стеке (сквозное присваивание).
         Для обратной совместимости с текущим evaluator: если имя не найдено в стеке,
