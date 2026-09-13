@@ -30,21 +30,22 @@ class Ousia:
         self.scopes.pop()
 
     def declare(self, name: str, value: Value) -> None:
-        """Создаёт новую переменную в текущей (верхней) области видимости.
-        Статический checker уже гарантировал отсутствие затенения во всём стеке,
-        поэтому здесь достаточно просто записать значение в верхний словарь.
+        """Создаёт новую переменную строго в текущей (верхней) области видимости.
+        Понадобится, когда evaluator начнёт разделять Horos и Thesis.
         """
         self.scopes[-1][name] = value
 
     def assign(self, name: str, value: Value) -> None:
-        """Присваивает значение переменной. Ищет по стеку сверху вниз."""
+        """Обновляет существующую переменную. Ищет во всём стеке (сквозное присваивание).
+        Для обратной совместимости с текущим evaluator: если имя не найдено в стеке,
+        создаёт его в текущей области (fallback для Horos).
+        """
         for scope in reversed(self.scopes):
             if name in scope:
                 scope[name] = value
                 return
-        raise UndefinedRuntimeVariable(
-            f"переменная {name!r} не имеет значения в рантайме"
-        )
+        # Fallback для Horos, пока evaluator не обновлён
+        self.scopes[-1][name] = value
 
     def lookup(self, name: str) -> Value:
         """Ищет значение переменной от ближайшей области к глобальной."""
