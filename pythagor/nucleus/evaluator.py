@@ -1,11 +1,8 @@
-"""Вычислитель PYTHagor. Фаза 1.3.
-
+"""Вычислитель PYTHagor. Фаза 1.4.
 Вычисление начинается только после пройденной проверки типов.
 Значения рантайма: Monada и Dyada. Значения переменных живут в Ousia.
 """
-
 from __future__ import annotations
-
 from pythagor.nucleus import checker, runtime
 from pythagor.nucleus.ast import (
     Atomos,
@@ -18,7 +15,6 @@ from pythagor.nucleus.ast import (
     Tropos,
 )
 from pythagor.nucleus.values import Value
-
 
 BINARY_METHODS = {
     "+": "add",
@@ -33,7 +29,6 @@ BINARY_METHODS = {
     "и": "and_op",
     "или": "or_op",
 }
-
 
 def eval_expr(expr: Expr, ousia: runtime.Ousia) -> Value:
     """Вычисляет выражение в контексте значений ousia."""
@@ -52,10 +47,8 @@ def eval_expr(expr: Expr, ousia: runtime.Ousia) -> Value:
         return operand.not_op()
     raise TypeError(f"неизвестный узел выражения: {type(expr).__name__}")
 
-
 def run(cosmos: Cosmos) -> Value:
     """Проверяет типы, затем вычисляет операторы по порядку.
-
     При рассогласовании типов рантайм не стартует.
     Возвращает значение последнего оператора.
     """
@@ -63,7 +56,10 @@ def run(cosmos: Cosmos) -> Value:
     ousia = runtime.Ousia()
     result: Value | None = None
     for stmt in cosmos.statements:
-        if isinstance(stmt, (Horos, Thesis)):
+        if isinstance(stmt, Horos):
+            result = eval_expr(stmt.value, ousia)
+            ousia.declare(stmt.name, result)
+        elif isinstance(stmt, Thesis):
             result = eval_expr(stmt.value, ousia)
             ousia.assign(stmt.name, result)
         elif isinstance(stmt, Expr):

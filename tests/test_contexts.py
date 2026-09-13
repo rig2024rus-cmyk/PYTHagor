@@ -31,13 +31,13 @@ def test_nomos_rejects_undefined() -> None:
 
 def test_ousia_assign_and_lookup() -> None:
     ousia = Ousia()
-    ousia.assign("x", Monada(5))
+    ousia.declare("x", Monada(5))
     assert ousia.lookup("x") == Monada(5)
 
 
 def test_ousia_overwrites() -> None:
     ousia = Ousia()
-    ousia.assign("x", Monada(5))
+    ousia.declare("x", Monada(5))
     ousia.assign("x", Monada(10))
     assert ousia.lookup("x") == Monada(10)
 
