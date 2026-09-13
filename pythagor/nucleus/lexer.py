@@ -34,6 +34,8 @@ class TokenType(Enum):
     LEFT_PAREN = auto()
     RIGHT_PAREN = auto()
     NEWLINE = auto()
+    ФУНКЦИЯ = auto()
+    ВЕРНУТЬ = auto()
     EOF = auto()
 
 
@@ -49,6 +51,8 @@ KEYWORDS = {
     "и": TokenType.AND,
     "или": TokenType.OR,
     "не": TokenType.NOT,
+    "функция": TokenType.ФУНКЦИЯ,
+    "вернуть": TokenType.ВЕРНУТЬ,
     "если": TokenType.IF,
     "иначе": TokenType.ELSE,
     "конец": TokenType.END,
@@ -121,7 +125,9 @@ class Lexer:
     def _read_identifier(self) -> str:
         start = self.pos
         while self.pos < len(self.text) and (
-            self.text[self.pos].isalpha() or self.text[self.pos] == "_" or self.text[self.pos].isdigit()
+            self.text[self.pos].isalpha()
+            or self.text[self.pos] == "_"
+            or self.text[self.pos].isdigit()
         ):
             self._advance()
         return self.text[start : self.pos]
