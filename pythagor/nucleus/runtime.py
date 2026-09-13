@@ -4,11 +4,8 @@ Ousia - сущность, бытие, где живут реальные зна�
 Поддерживает стек областей видимости для условий, циклов и функций.
 """
 from __future__ import annotations
-
 from dataclasses import dataclass, field
-
 from pythagor.nucleus.values import Value
-
 
 class UndefinedRuntimeVariable(Exception):
     """Попытка получить значение необъявленной переменной в рантайме.
@@ -34,7 +31,8 @@ class Ousia:
 
     def declare(self, name: str, value: Value) -> None:
         """Создаёт новую переменную в текущей (верхней) области видимости.
-        Используется при выполнении Horos (объявления).
+        Статический checker уже гарантировал отсутствие затенения во всём стеке,
+        поэтому здесь достаточно просто записать значение в верхний словарь.
         """
         self.scopes[-1][name] = value
 
