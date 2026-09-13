@@ -1,7 +1,7 @@
-"""Лексер PYTHagor. Фаза 1.2.
+"""Лексер PYTHagor. Фаза 1.3.
 
-Токенизация текста на числа, операторы, скобки.
-Отслеживание позиций для сообщений об ошибках.
+Токенизация текста на числа, операторы, скобки, имена, двоеточие, присваивание,
+переносы строк. Отслеживание позиций для сообщений об ошибках.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from enum import Enum, auto
 
 class TokenType(Enum):
     NUMBER = auto()
+    ID = auto()
     PLUS = auto()
     MINUS = auto()
     MUL = auto()
@@ -21,11 +22,14 @@ class TokenType(Enum):
     GE = auto()
     EQ = auto()
     NE = auto()
+    ASSIGN = auto()
+    COLON = auto()
     AND = auto()
     OR = auto()
     NOT = auto()
     LEFT_PAREN = auto()
     RIGHT_PAREN = auto()
+    NEWLINE = auto()
     EOF = auto()
 
 
@@ -49,6 +53,8 @@ SINGLE_CHAR_OPS = {
     "*": TokenType.MUL,
     "<": TokenType.LT,
     ">": TokenType.GT,
+    "=": TokenType.ASSIGN,
+    ":": TokenType.COLON,
     "(": TokenType.LEFT_PAREN,
     ")": TokenType.RIGHT_PAREN,
 }
@@ -95,7 +101,7 @@ class Lexer:
         return ch
 
     def _skip_whitespace(self) -> None:
-        while self.pos < len(self.text) and self.text[self.pos].isspace():
+        while self.pos < len(self.text) and self.text[self.pos] in (" ", "\t"):
             self._advance()
 
     def _read_number(self) -> str:
@@ -104,10 +110,10 @@ class Lexer:
             self._advance()
         return self.text[start : self.pos]
 
-    def _read_keyword(self) -> str:
+    def _read_identifier(self) -> str:
         start = self.pos
         while self.pos < len(self.text) and (
-            self.text[self.pos].isalpha() or self.text[self.pos] == "_"
+            self.text[self.pos].isalpha() or self.text[self.pos] == "_" or self.text[self.pos].isdigit()
         ):
             self._advance()
         return self.text[start : self.pos]
@@ -124,15 +130,19 @@ class Lexer:
         if ch is None:
             return Token(TokenType.EOF, "", line, column)
 
+        if ch == "\n":
+            self._advance()
+            return Token(TokenType.NEWLINE, "\n", line, column)
+
         if ch.isdigit():
             value = self._read_number()
             return Token(TokenType.NUMBER, value, line, column)
 
         if ch.isalpha() or ch == "_":
-            value = self._read_keyword()
+            value = self._read_identifier()
             if value in KEYWORDS:
                 return Token(KEYWORDS[value], value, line, column)
-            raise LexerError(f"неизвестное слово {value!r}", line, column)
+            return Token(TokenType.ID, value, line, column)
 
         two_char = self.text[self.pos : self.pos + 2]
         if two_char in TWO_CHAR_OPS:

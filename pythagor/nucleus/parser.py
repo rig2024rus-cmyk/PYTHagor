@@ -1,14 +1,27 @@
-"""Парсер PYTHagor. Фаза 1.2.
+"""Парсер PYTHagor. Фаза 1.3.
 
 Рекурсивный спуск с приоритетами операций,
 от низшего к высшему: или, и, сравнения, + и -, *, унарные - и не, первичные.
+Программа - последовательность операторов, разделённых переносами строк:
+объявлений (имя : тип = значение), присваиваний (имя = значение)
+и выражений.
 """
 
 from __future__ import annotations
 
-from pythagor.nucleus.ast import Atomos, Cosmos, Expr, Harmonia, Tropos
+from pythagor.nucleus.ast import (
+    Atomos,
+    Cosmos,
+    Expr,
+    Harmonia,
+    Horos,
+    Onoma,
+    Statement,
+    Thesis,
+    Tropos,
+)
 from pythagor.nucleus.lexer import Lexer, Token, TokenType
-from pythagor.nucleus.types import Arithmos
+from pythagor.nucleus.types import Arithmos, Dilemma
 from pythagor.nucleus.values import Monada
 
 
@@ -32,6 +45,8 @@ COMPARISON_TOKENS = {
 
 ADDITIVE_TOKENS = {TokenType.PLUS: "+", TokenType.MINUS: "-"}
 
+TYPE_NAMES = {"Целое": Arithmos, "Булево": Dilemma}
+
 
 class Parser:
     """Парсер: превращает поток токенов в Cosmos."""
@@ -42,6 +57,11 @@ class Parser:
 
     def _current(self) -> Token:
         return self.tokens[self.pos]
+
+    def _peek_type(self) -> TokenType:
+        if self.pos + 1 < len(self.tokens):
+            return self.tokens[self.pos + 1].typ
+        return TokenType.EOF
 
     def _advance(self) -> Token:
         token = self.tokens[self.pos]
@@ -55,10 +75,62 @@ class Parser:
             raise ParserError(f"ожидалось {what}", token.line, token.column)
         return self._advance()
 
+    def _skip_newlines(self) -> None:
+        while self._current().typ == TokenType.NEWLINE:
+            self._advance()
+
     def parse(self) -> Cosmos:
-        expr = self.parse_or()
-        self._expect(TokenType.EOF, "конец выражения")
-        return Cosmos(expr)
+        statements: list = []
+        self._skip_newlines()
+        while self._current().typ != TokenType.EOF:
+            statements.append(self.parse_statement())
+            if self._current().typ == TokenType.NEWLINE:
+                self._advance()
+                self._skip_newlines()
+            elif self._current().typ == TokenType.EOF:
+                break
+            else:
+                token = self._current()
+                raise ParserError(
+                    "ожидался перенос строки или конец программы",
+                    token.line,
+                    token.column,
+                )
+        if not statements:
+            token = self._current()
+            raise ParserError("пустая программа", token.line, token.column)
+        return Cosmos(tuple(statements))
+
+    def parse_statement(self):
+        """Оператор: объявление, присваивание или выражение."""
+        if self._current().typ == TokenType.ID:
+            if self._peek_type() == TokenType.COLON:
+                return self.parse_declaration()
+            if self._peek_type() == TokenType.ASSIGN:
+                return self.parse_assignment()
+        return self.parse_or()
+
+    def parse_declaration(self) -> Horos:
+        """Объявление: имя : тип = значение."""
+        name_token = self._advance()
+        self._expect(TokenType.COLON, "двоеточие :")
+        type_token = self._expect(TokenType.ID, "имя типа")
+        if type_token.value not in TYPE_NAMES:
+            raise ParserError(
+                f"неизвестный тип {type_token.value!r}",
+                type_token.line,
+                type_token.column,
+            )
+        self._expect(TokenType.ASSIGN, "знак присваивания =")
+        value = self.parse_or()
+        return Horos(name_token.value, TYPE_NAMES[type_token.value](), value)
+
+    def parse_assignment(self) -> Thesis:
+        """Присваивание: имя = значение."""
+        name_token = self._advance()
+        self._expect(TokenType.ASSIGN, "знак присваивания =")
+        value = self.parse_or()
+        return Thesis(name_token.value, value)
 
     def parse_or(self) -> Expr:
         left = self.parse_and()
@@ -110,6 +182,9 @@ class Parser:
         if token.typ == TokenType.NUMBER:
             self._advance()
             return Atomos(Monada(int(token.value)), Arithmos())
+        if token.typ == TokenType.ID:
+            self._advance()
+            return Onoma(token.value)
         if token.typ == TokenType.LEFT_PAREN:
             self._advance()
             expr = self.parse_or()

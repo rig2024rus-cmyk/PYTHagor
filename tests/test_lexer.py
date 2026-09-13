@@ -56,16 +56,17 @@ def test_multiline() -> None:
     text = "2\n+ 3"
     tokens = Lexer(text).tokenize()
     assert tokens[0].line == 1
-    assert tokens[1].line == 2
-    assert tokens[1].column == 1
+    assert tokens[1].typ == TokenType.NEWLINE
     assert tokens[2].line == 2
-    assert tokens[2].column == 3
+    assert tokens[2].column == 1
+    assert tokens[3].line == 2
+    assert tokens[3].column == 3
 
 
-def test_unknown_word_raises() -> None:
-    with pytest.raises(LexerError) as exc_info:
-        Lexer("xyz").tokenize()
-    assert "xyz" in str(exc_info.value)
+def test_unknown_word_is_identifier() -> None:
+    tokens = Lexer("xyz").tokenize()
+    assert tokens[0].typ == TokenType.ID
+    assert tokens[0].value == "xyz"
 
 
 def test_unknown_char_raises() -> None:
@@ -82,5 +83,59 @@ def test_empty_input() -> None:
 
 def test_whitespace_only() -> None:
     tokens = Lexer("   \n  \t  ").tokenize()
-    assert len(tokens) == 1
-    assert tokens[0].typ == TokenType.EOF
+    assert [t.typ for t in tokens] == [TokenType.NEWLINE, TokenType.EOF]
+
+
+def test_identifier_token() -> None:
+    tokens = Lexer("x").tokenize()
+    assert tokens[0].typ == TokenType.ID
+    assert tokens[0].value == "x"
+
+
+def test_cyrillic_identifier() -> None:
+    tokens = Lexer("Целое").tokenize()
+    assert tokens[0].typ == TokenType.ID
+    assert tokens[0].value == "Целое"
+
+
+def test_assign_versus_eq() -> None:
+    tokens = Lexer("= ==").tokenize()
+    assert tokens[0].typ == TokenType.ASSIGN
+    assert tokens[1].typ == TokenType.EQ
+
+
+def test_colon_token() -> None:
+    tokens = Lexer(":").tokenize()
+    assert tokens[0].typ == TokenType.COLON
+
+
+def test_newline_token() -> None:
+    tokens = Lexer("1\n2").tokenize()
+    assert [t.typ for t in tokens] == [
+        TokenType.NUMBER,
+        TokenType.NEWLINE,
+        TokenType.NUMBER,
+        TokenType.EOF,
+    ]
+
+
+def test_declaration_line_tokens() -> None:
+    tokens = Lexer("x: Целое = 5").tokenize()
+    assert [t.typ for t in tokens[:-1]] == [
+        TokenType.ID,
+        TokenType.COLON,
+        TokenType.ID,
+        TokenType.ASSIGN,
+        TokenType.NUMBER,
+    ]
+
+
+def test_consecutive_newlines_kept() -> None:
+    tokens = Lexer("1\n\n2").tokenize()
+    assert [t.typ for t in tokens] == [
+        TokenType.NUMBER,
+        TokenType.NEWLINE,
+        TokenType.NEWLINE,
+        TokenType.NUMBER,
+        TokenType.EOF,
+    ]
