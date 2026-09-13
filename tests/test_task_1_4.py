@@ -80,3 +80,7 @@ def test_krisis_node_holds_branches() -> None:
 def test_krisis_else_branch_optional() -> None:
     krisis = Krisis(Atomos(Dyada(False), Dilemma()), (Kenosis(),))
     assert krisis.else_branch is None
+
+
+def test_paren_newline_suppressed() -> None:
+    assert run(parse("(2 +\n3) * 2")) == Monada(10)

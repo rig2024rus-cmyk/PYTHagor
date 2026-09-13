@@ -96,6 +96,7 @@ class Lexer:
         self.pos = 0
         self.line = 1
         self.column = 1
+        self.paren_depth = 0
 
     def _peek(self) -> str | None:
         if self.pos >= len(self.text):
@@ -146,6 +147,8 @@ class Lexer:
 
         if ch == "\n":
             self._advance()
+            if self.paren_depth > 0:
+                return self.next_token()
             return Token(TokenType.NEWLINE, "\n", line, column)
 
         if ch.isdigit():
@@ -166,7 +169,12 @@ class Lexer:
 
         if ch in SINGLE_CHAR_OPS:
             self._advance()
-            return Token(SINGLE_CHAR_OPS[ch], ch, line, column)
+            token_type = SINGLE_CHAR_OPS[ch]
+            if token_type == TokenType.LEFT_PAREN:
+                self.paren_depth += 1
+            elif token_type == TokenType.RIGHT_PAREN:
+                self.paren_depth -= 1
+            return Token(token_type, ch, line, column)
 
         raise LexerError(f"неожиданный символ {ch!r}", line, column)
 
