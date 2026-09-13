@@ -1,7 +1,9 @@
-"""Лексер PYTHagor. Фаза 1.3.
+"""Лексер PYTHagor. Фаза 1.4.
 
 Токенизация текста на числа, операторы, скобки, имена, двоеточие, присваивание,
-переносы строк. Отслеживание позиций для сообщений об ошибках.
+переносы строк. Ключевые слова: и, или, не, если, иначе, конец, пропуск,
+функция, вернуть. Перенос строки внутри скобок не разрывает выражение.
+Отслеживание позиций для сообщений об ошибках.
 """
 
 from __future__ import annotations
@@ -34,8 +36,8 @@ class TokenType(Enum):
     LEFT_PAREN = auto()
     RIGHT_PAREN = auto()
     NEWLINE = auto()
-    ФУНКЦИЯ = auto()
-    ВЕРНУТЬ = auto()
+    FUNCTION = auto()
+    RETURN = auto()
     EOF = auto()
 
 
@@ -51,8 +53,8 @@ KEYWORDS = {
     "и": TokenType.AND,
     "или": TokenType.OR,
     "не": TokenType.NOT,
-    "функция": TokenType.ФУНКЦИЯ,
-    "вернуть": TokenType.ВЕРНУТЬ,
+    "функция": TokenType.FUNCTION,
+    "вернуть": TokenType.RETURN,
     "если": TokenType.IF,
     "иначе": TokenType.ELSE,
     "конец": TokenType.END,
