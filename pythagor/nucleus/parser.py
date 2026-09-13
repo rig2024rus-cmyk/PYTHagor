@@ -15,6 +15,8 @@ from pythagor.nucleus.ast import (
     Expr,
     Harmonia,
     Horos,
+    Kenosis,
+    Krisis,
     Onoma,
     Thesis,
     Tropos,
@@ -101,7 +103,12 @@ class Parser:
         return Cosmos(tuple(statements))
 
     def parse_statement(self):
-        """Оператор: объявление, присваивание или выражение."""
+        """Оператор: условие, пропуск, объявление, присваивание или выражение."""
+        if self._current().typ == TokenType.IF:
+            return self.parse_krisis()
+        if self._current().typ == TokenType.PASS:
+            self._advance()
+            return Kenosis()
         if self._current().typ == TokenType.ID:
             if self._peek_type() == TokenType.COLON:
                 return self.parse_declaration()
@@ -130,6 +137,53 @@ class Parser:
         self._expect(TokenType.ASSIGN, "знак присваивания =")
         value = self.parse_or()
         return Thesis(name_token.value, value)
+
+    def parse_statement_block(self, terminators) -> tuple:
+        """Последовательность операторов до токена-терминатора."""
+        statements = []
+        self._skip_newlines()
+        while (
+            self._current().typ not in terminators
+            and self._current().typ != TokenType.EOF
+        ):
+            statements.append(self.parse_statement())
+            if self._current().typ == TokenType.NEWLINE:
+                self._advance()
+                self._skip_newlines()
+            elif (
+                self._current().typ in terminators
+                or self._current().typ == TokenType.EOF
+            ):
+                break
+            else:
+                token = self._current()
+                raise ParserError(
+                    "ожидался перенос строки или конец блока",
+                    token.line,
+                    token.column,
+                )
+        if not statements:
+            token = self._current()
+            raise ParserError(
+                "пустой блок: ожидался оператор или 'пропуск'",
+                token.line,
+                token.column,
+            )
+        return tuple(statements)
+
+    def parse_krisis(self) -> Krisis:
+        """Условие: если условие: блок [иначе: блок] конец."""
+        self._expect(TokenType.IF, "ключевое слово 'если'")
+        condition = self.parse_or()
+        self._expect(TokenType.COLON, "двоеточие : после условия")
+        then_branch = self.parse_statement_block({TokenType.ELSE, TokenType.END})
+        else_branch = None
+        if self._current().typ == TokenType.ELSE:
+            self._advance()
+            self._expect(TokenType.COLON, "двоеточие : после 'иначе'")
+            else_branch = self.parse_statement_block({TokenType.END})
+        self._expect(TokenType.END, "'конец', закрывающее блок")
+        return Krisis(condition, then_branch, else_branch)
 
     def parse_or(self) -> Expr:
         left = self.parse_and()
