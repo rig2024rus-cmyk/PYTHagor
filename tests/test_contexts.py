@@ -7,7 +7,7 @@ from pythagor.nucleus.environment import (
 )
 from pythagor.nucleus.runtime import Ousia, UndefinedRuntimeVariable
 from pythagor.nucleus.types import Arithmos, Dilemma
-from pythagor.nucleus.values import Dyada, Monada
+from pythagor.nucleus.values import Monada
 
 
 def test_nomos_declare_and_lookup() -> None:

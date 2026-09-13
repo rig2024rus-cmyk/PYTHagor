@@ -16,7 +16,6 @@ from pythagor.nucleus.ast import (
     Harmonia,
     Horos,
     Onoma,
-    Statement,
     Thesis,
     Tropos,
 )

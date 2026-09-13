@@ -44,7 +44,13 @@ class HintChannel:
     def emit(self, event: HintEvent) -> None:
         self._queue.put(event)
 
-    def push(self, phase: HintPhase, text: str, replace_id: str | None = None, priority: int = 0) -> None:
+    def push(
+        self,
+        phase: HintPhase,
+        text: str,
+        replace_id: str | None = None,
+        priority: int = 0,
+    ) -> None:
         self.emit(HintEvent(phase=phase, text=text, replace_id=replace_id, priority=priority))
 
     def stop(self) -> None:
