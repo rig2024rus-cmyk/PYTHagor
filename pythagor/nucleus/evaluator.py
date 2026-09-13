@@ -3,6 +3,7 @@
 Значения рантайма: Monada и Dyada. Значения переменных живут в Ousia.
 """
 from __future__ import annotations
+
 from pythagor.nucleus import checker, runtime
 from pythagor.nucleus.ast import (
     Atomos,

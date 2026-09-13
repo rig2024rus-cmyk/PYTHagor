@@ -1,8 +1,8 @@
 import pytest
 
-from pythagor.nucleus.ast import Atomos, Harmonia, Tropos, Cosmos
+from pythagor.nucleus.ast import Atomos, Cosmos, Harmonia, Tropos
 from pythagor.nucleus.types import Arithmos, Dilemma
-from pythagor.nucleus.values import Monada, Dyada
+from pythagor.nucleus.values import Dyada, Monada
 
 
 def test_atomos_valid_pairs() -> None:

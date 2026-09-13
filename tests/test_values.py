@@ -1,6 +1,6 @@
 import pytest
 
-from pythagor.nucleus.values import Monada, Dyada
+from pythagor.nucleus.values import Dyada, Monada
 
 
 def test_monada_arithmetic() -> None:

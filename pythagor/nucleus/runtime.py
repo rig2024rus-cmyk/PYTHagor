@@ -4,8 +4,11 @@ Ousia - сущность, бытие, где живут реальные зна�
 Поддерживает стек областей видимости для условий, циклов и функций.
 """
 from __future__ import annotations
+
 from dataclasses import dataclass, field
+
 from pythagor.nucleus.values import Value
+
 
 class UndefinedRuntimeVariable(Exception):
     """Попытка получить значение необъявленной переменной в рантайме.

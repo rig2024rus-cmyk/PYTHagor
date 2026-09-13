@@ -14,8 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from pythagor.nucleus.types import Arithmos, Dilemma, Type
-from pythagor.nucleus.values import Monada, Dyada, Value
-
+from pythagor.nucleus.values import Dyada, Monada, Value
 
 ARITHMETIC_OPS = frozenset({"+", "-", "*"})
 COMPARISON_OPS = frozenset({"<", ">", "<=", ">=", "==", "!="})
@@ -129,4 +128,3 @@ class Krisis(Statement):
 @dataclass(frozen=True)
 class Kenosis(Statement):
     """Пропуск. Намеренно пустой оператор для пустых блоков."""
-    pass
