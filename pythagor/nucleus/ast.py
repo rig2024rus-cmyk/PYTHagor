@@ -110,7 +110,12 @@ class Cosmos:
         if isinstance(self.statements, (Expr, Statement)):
             object.__setattr__(self, "statements", (self.statements,))
         else:
-            object.__setattr__(self, "statements", tuple(self.statements))
+            statements = tuple(self.statements)
+            if not statements:
+                raise ValueError(
+                    "Cosmos: программа должна содержать хотя бы один оператор"
+                )
+            object.__setattr__(self, "statements", statements)
 
     @property
     def last(self) -> object:

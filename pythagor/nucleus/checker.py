@@ -70,30 +70,28 @@ def infer(expr: Expr, nomos: environment.Nomos) -> Type:
     raise TypeMismatch(f"неизвестный узел выражения: {type(expr).__name__}")
 
 
-def check_statement(stmt: Statement, nomos: environment.Nomos) -> None:
-    """Проверяет оператор и обновляет nomos."""
+def check_statement(stmt: Statement, nomos: environment.Nomos) -> Type:
+    """Проверяет оператор, обновляет nomos, возвращает тип результата."""
     if isinstance(stmt, Horos):
         value_type = infer(stmt.value, nomos)
         _expect(value_type, stmt.typ, f"значение переменной '{stmt.name}'")
         nomos.declare(stmt.name, stmt.typ)
-    elif isinstance(stmt, Thesis):
+        return stmt.typ
+    if isinstance(stmt, Thesis):
         value_type = infer(stmt.value, nomos)
         var_type = nomos.lookup(stmt.name)
         _expect(value_type, var_type, f"присваивание переменной '{stmt.name}'")
-    elif isinstance(stmt, Expr):
-        infer(stmt, nomos)
-    else:
-        raise TypeMismatch(f"неизвестный оператор: {type(stmt).__name__}")
+        return var_type
+    if isinstance(stmt, Expr):
+        return infer(stmt, nomos)
+    raise TypeMismatch(f"неизвестный оператор: {type(stmt).__name__}")
 
 
 def check(cosmos: Cosmos) -> Type:
     """Проверяет программу и возвращает тип последнего оператора."""
     nomos = environment.Nomos()
+    result_type: Type | None = None
     for stmt in cosmos.statements:
-        check_statement(stmt, nomos)
-    last = cosmos.last
-    if isinstance(last, Expr):
-        return infer(last, nomos)
-    if isinstance(last, (Horos, Thesis)):
-        return infer(last.value, nomos)
-    raise TypeMismatch(f"неизвестный оператор: {type(last).__name__}")
+        result_type = check_statement(stmt, nomos)
+    assert result_type is not None, "программа без операторов"
+    return result_type
