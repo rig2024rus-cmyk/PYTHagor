@@ -27,6 +27,10 @@ class TokenType(Enum):
     AND = auto()
     OR = auto()
     NOT = auto()
+    IF = auto()
+    ELSE = auto()
+    END = auto()
+    PASS = auto()
     LEFT_PAREN = auto()
     RIGHT_PAREN = auto()
     NEWLINE = auto()
@@ -45,6 +49,10 @@ KEYWORDS = {
     "и": TokenType.AND,
     "или": TokenType.OR,
     "не": TokenType.NOT,
+    "если": TokenType.IF,
+    "иначе": TokenType.ELSE,
+    "конец": TokenType.END,
+    "пропуск": TokenType.PASS,
 }
 
 SINGLE_CHAR_OPS = {
@@ -101,7 +109,7 @@ class Lexer:
         return ch
 
     def _skip_whitespace(self) -> None:
-        while self.pos < len(self.text) and self.text[self.pos] in (" ", "\t"):
+        while self.pos < len(self.text) and self.text[self.pos] in (" ", "\t", "\r"):
             self._advance()
 
     def _read_number(self) -> str:

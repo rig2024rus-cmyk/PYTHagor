@@ -117,3 +117,16 @@ class Cosmos:
     def last(self) -> object:
         """Последний оператор программы."""
         return self.statements[-1]
+
+
+@dataclass(frozen=True)
+class Krisis(Statement):
+    """Условие (если/иначе). Разделение потока выполнения."""
+    condition: Expr
+    then_branch: tuple[Statement, ...]
+    else_branch: tuple[Statement, ...] | None = None
+
+@dataclass(frozen=True)
+class Kenosis(Statement):
+    """Пропуск. Намеренно пустой оператор для пустых блоков."""
+    pass
