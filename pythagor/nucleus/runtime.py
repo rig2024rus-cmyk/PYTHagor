@@ -30,12 +30,6 @@ class Ousia:
         self.scopes.pop()
 
     def declare(self, name: str, value: Value) -> None:
-        """Создаёт новую переменную строго в текущей (верхней) области видимости.
-        Понадобится, когда evaluator начнёт разделять Horos и Thesis.
-        """
-        self.scopes[-1][name] = value
-
-    def declare(self, name: str, value: Value) -> None:
         """Объявляет переменную в текущей (верхней) области видимости. Затенение запрещено."""
         for scope in self.scopes:
             if name in scope:

@@ -17,6 +17,8 @@ from pythagor.nucleus.ast import (
     Expr,
     Harmonia,
     Horos,
+    Kenosis,
+    Krisis,
     Onoma,
     Statement,
     Thesis,
@@ -82,6 +84,25 @@ def check_statement(stmt: Statement, nomos: environment.Nomos) -> Type:
         var_type = nomos.lookup(stmt.name)
         _expect(value_type, var_type, f"присваивание переменной '{stmt.name}'")
         return var_type
+    if isinstance(stmt, Krisis):
+        condition_type = infer(stmt.condition, nomos)
+        _expect(condition_type, Dilemma(), "условие в 'если'")
+        nomos.enter_scope()
+        try:
+            for s in stmt.then_branch:
+                check_statement(s, nomos)
+        finally:
+            nomos.exit_scope()
+        if stmt.else_branch is not None:
+            nomos.enter_scope()
+            try:
+                for s in stmt.else_branch:
+                    check_statement(s, nomos)
+            finally:
+                nomos.exit_scope()
+        return None
+    if isinstance(stmt, Kenosis):
+        return None
     if isinstance(stmt, Expr):
         return infer(stmt, nomos)
     raise TypeMismatch(f"неизвестный оператор: {type(stmt).__name__}")
@@ -93,5 +114,8 @@ def check(cosmos: Cosmos) -> Type:
     result_type: Type | None = None
     for stmt in cosmos.statements:
         result_type = check_statement(stmt, nomos)
-    assert result_type is not None, "программа без операторов"
+    if result_type is None:
+        raise TypeMismatch(
+            "завершающий оператор должен возвращать значение или объявлять переменную"
+        )
     return result_type
