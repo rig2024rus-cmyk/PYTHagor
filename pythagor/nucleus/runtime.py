@@ -14,6 +14,14 @@ class UndefinedRuntimeVariable(Exception):
     от внутренних несогласованностей.
     """
 
+
+class VariableAlreadyDeclaredRuntime(Exception):
+    """Повторное объявление переменной в рантайме.
+    Как и UndefinedRuntimeVariable, в нормальной работе недостижимо:
+    checker уже отверг бы такую программу до запуска. Защита от
+    внутренних несогласованностей, не пользовательская ошибка.
+    """
+
 @dataclass
 class Ousia:
     """Контекст значений: стек областей видимости имён переменных и их значений."""
@@ -33,20 +41,16 @@ class Ousia:
         """Объявляет переменную в текущей (верхней) области видимости. Затенение запрещено."""
         for scope in self.scopes:
             if name in scope:
-                raise UndefinedRuntimeVariable(f"переменная {name!r} уже объявлена")
+                raise VariableAlreadyDeclaredRuntime(f"переменная {name!r} уже объявлена")
         self.scopes[-1][name] = value
 
     def assign(self, name: str, value: Value) -> None:
-        """Обновляет существующую переменную. Ищет во всём стеке (сквозное присваивание).
-        Для обратной совместимости с текущим evaluator: если имя не найдено в стеке,
-        создаёт его в текущей области (fallback для Horos).
-        """
+        """Обновляет существующую переменную. Ищет во всём стеке (сквозное присваивание)."""
         for scope in reversed(self.scopes):
             if name in scope:
                 scope[name] = value
                 return
-        # Fallback для Horos, пока evaluator не обновлён
-        self.scopes[-1][name] = value
+        raise UndefinedRuntimeVariable(f"переменная {name!r} не объявлена")
 
     def lookup(self, name: str) -> Value:
         """Ищет значение переменной от ближайшей области к глобальной."""

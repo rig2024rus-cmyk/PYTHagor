@@ -11,7 +11,10 @@ from pythagor.nucleus.ast import (
     Expr,
     Harmonia,
     Horos,
+    Kenosis,
+    Krisis,
     Onoma,
+    Statement,
     Thesis,
     Tropos,
 )
@@ -48,6 +51,34 @@ def eval_expr(expr: Expr, ousia: runtime.Ousia) -> Value:
         return operand.not_op()
     raise TypeError(f"неизвестный узел выражения: {type(expr).__name__}")
 
+def run_statement(stmt: Statement, ousia: runtime.Ousia) -> Value | None:
+    """Выполняет оператор, обновляет ousia, возвращает значение результата."""
+    if isinstance(stmt, Horos):
+        value = eval_expr(stmt.value, ousia)
+        ousia.declare(stmt.name, value)
+        return value
+    if isinstance(stmt, Thesis):
+        value = eval_expr(stmt.value, ousia)
+        ousia.assign(stmt.name, value)
+        return value
+    if isinstance(stmt, Krisis):
+        condition = eval_expr(stmt.condition, ousia)
+        branch = stmt.then_branch if condition.b else stmt.else_branch
+        if branch is not None:
+            ousia.enter_scope()
+            try:
+                for s in branch:
+                    run_statement(s, ousia)
+            finally:
+                ousia.exit_scope()
+        return None
+    if isinstance(stmt, Kenosis):
+        return None
+    if isinstance(stmt, Expr):
+        return eval_expr(stmt, ousia)
+    raise TypeError(f"неизвестный оператор: {type(stmt).__name__}")
+
+
 def run(cosmos: Cosmos) -> Value:
     """Проверяет типы, затем вычисляет операторы по порядку.
     При рассогласовании типов рантайм не стартует.
@@ -57,15 +88,6 @@ def run(cosmos: Cosmos) -> Value:
     ousia = runtime.Ousia()
     result: Value | None = None
     for stmt in cosmos.statements:
-        if isinstance(stmt, Horos):
-            result = eval_expr(stmt.value, ousia)
-            ousia.declare(stmt.name, result)
-        elif isinstance(stmt, Thesis):
-            result = eval_expr(stmt.value, ousia)
-            ousia.assign(stmt.name, result)
-        elif isinstance(stmt, Expr):
-            result = eval_expr(stmt, ousia)
-        else:
-            raise TypeError(f"неизвестный оператор: {type(stmt).__name__}")
+        result = run_statement(stmt, ousia)
     assert result is not None, "программа без операторов"
     return result
