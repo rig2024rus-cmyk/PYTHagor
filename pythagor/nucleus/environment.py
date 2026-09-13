@@ -1,10 +1,8 @@
 """Контекст типов PYTHagor. Фаза 1.4.
-
 Nomos - закон, порядок, определяющий, какие переменные объявлены и их типы.
 Используется во время статической проверки типов.
-Поддерживает стек областей видимости для условий и функций.
+Поддерживает стек областей видимости для условий, циклов и функций.
 """
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,7 +25,7 @@ class Nomos:
     scopes: list[dict[str, Type]] = field(default_factory=lambda: [{}])
 
     def enter_scope(self) -> None:
-        """Входит в новую область видимости (блок, тело функции)."""
+        """Входит в новую область видимости (блок условия, цикла, тело функции)."""
         self.scopes.append({})
 
     def exit_scope(self) -> None:
